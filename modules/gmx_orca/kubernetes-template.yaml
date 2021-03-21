@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: SUBSTITUTE
+spec:
+  template:
+    metadata:
+      labels:
+        app: SUBSTITUTE
+    spec:
+      securityContext:
+        runAsUser: 1001
+        fsGroup: 1001
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
+      containers:
+        - name: SUBSTITUTE
+          image: SUBSTITUTE
+          args: []
+          volumeMounts:
+            - mountPath: /tmp
+              name: shared-volume
+          resources:
+            limits:
+              cpu: 20
+            requests:
+              cpu: 4
+      restartPolicy: Never
+      volumes:
+        - name: shared-volume
+          persistentVolumeClaim:
+            claimName: SUBSTITUTE
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 600

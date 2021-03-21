@@ -49,7 +49,7 @@ RUN bash -c "source /opt/intelpython3/bin/activate && conda install -y -c conda-
 #install parmtSNE
 RUN bash -c "apt-get update && apt-get install -y git"
 RUN bash -c "cd /opt && git clone https://github.com/spiwokv/parmtSNEcv.git" 
-RUN bash -c "source /opt/intelpython3/bin/activate && cd /opt/parmtSNEcv && pip install . && pip install tensorflow"
+RUN bash -c "source /opt/intelpython3/bin/activate && pip install 'ruamel.yaml<=0.15.94' && cd /opt/parmtSNEcv && pip install . && pip install --ignore-installed six tensorflow"
 
 #install kubectl
 RUN bash -c "apt-get update && apt-get install -y apt-transport-https gnupg2 curl xz-utils"
@@ -64,8 +64,8 @@ RUN bash -c "echo 'deb [arch=amd64] https://download.docker.com/linux/ubuntu bio
 RUN bash -c "curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add -"
 RUN bash -c "curl -s -L -o /etc/apt/sources.list.d/nvidia-docker.list https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list" 
 RUN bash -c "apt update && apt install -y docker-ce-cli nvidia-container-toolkit"
-RUN bash -c "pip install 'ruamel.yaml<=0.15.94'"
 RUN bash -c "apt-get install sudo -y"
+RUN bash -c "apt-get install jq -y"
 
 #copy all necessary files to run force field correction evaluation
 COPY modules ${BASE}/modules/
@@ -80,4 +80,4 @@ EXPOSE 8888
 
 
 #run Jupyter Notebook when container is executed
-CMD bash -c "sleep 2 && curl -LO https://gitlab.ics.muni.cz/467814/magicforcefield-pipeline/-/raw/master/pipelineJupyter.ipynb && source /opt/intelpython3/bin/activate && jupyter notebook --ip 0.0.0.0 --allow-root --port 8888"
+CMD bash -c "sleep 2 && curl -LO https://gitlab.ics.muni.cz/467814/magicforcefield-pipeline/-/raw/kubernetes/pipelineJupyter.ipynb && source /opt/intelpython3/bin/activate && jupyter notebook --ip 0.0.0.0 --allow-root --port 8888"

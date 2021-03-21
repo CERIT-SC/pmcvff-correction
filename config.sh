@@ -9,4 +9,4 @@ export WORK="$PWD/$SHARED_DIR"
 #root to be set in computing environment
 export ROOT_TMP="$SCRATCHDIR"
 #name of image containing pipeline
-export IMAGE_NAME="spectraes/pipeline:latest"
+export IMAGE_NAME="spectraes/pipeline:22-02-2021"
