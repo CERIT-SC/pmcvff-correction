@@ -1,12 +1,15 @@
 #!/bin/bash
 
 unset label
-while getopts ":l:" opt; do
+while getopts ":l:c:" opt; do
   case $opt in
-
     l)
       label="$OPTARG"
-      echo "waiting for jobs with label $label" >&2
+      echo "Waiting for job(s) with label $label" >&2
+      ;;
+    c)
+      count=$OPTARG
+      echo "Waiting for $OPTARG jobs to complete" >&2
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -19,12 +22,19 @@ while getopts ":l:" opt; do
   esac
 done
 
-label_flag=""
-if [[ -n $label ]]; then
-    label_flag="jobs -l app=$label"
-fi
+while true; do
+  succeeded=`kubectl get jobs -l app="$label" -o 'jsonpath={..status.conditions[?(@.type=="Complete")].status}'`
+  no_of_succeeded=`echo "$succeeded" | wc -w`
 
-#workaround to experimental not working kubernetes wait - wait until all jobs with label finish
-kubectl logs -f -l app=$label > /dev/null
+  failed=`kubectl get jobs -l app="$label" -o 'jsonpath={..status.conditions[?(@.type=="Failed")].status}'`
+  no_of_failed=`echo "$failed" | wc -w`
 
-sleep 2 && kubectl logs -l app=$label --tail=-1
+  summ=$(( no_of_succeeded + no_of_failed ))
+  if [[ summ -eq count ]]; then
+    break
+  fi
+
+  sleep 1
+done
+
+kubectl logs -l app=$label --tail=-1

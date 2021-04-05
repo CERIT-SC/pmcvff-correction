@@ -1,6 +1,6 @@
 Run instructions:
 
-1. Go to https://magic-pipeline.cerit-sc.cz/
+1. Go to https://pmcvff-correction.cerit-sc.cz/
 2. Log in via Elixir
 3. Start your own pipeline
 4. Use the pipeline
