@@ -99,19 +99,20 @@ def parallel_wait():
 
 	:return: Nothing
 	"""
-	label = None
-	with open(f'{PICKLE_PATH}/lock.pkl', 'rb') as fp:
-		lock_obj = pickle.load(fp)
-		label = lock_obj['Parallel_label']
+	with open(f"{PICKLE_PATH}/lock.pkl","rb") as fp:
+		lock_object = pickle.load(fp)
+		label = lock_object['Parallel_label']
+		count = lock_object['Count']
+		if len(label) == 0 or count <= 0:
+			print(f"Nothing to wait for with label => {label}", file=sys.stderr)
+			return 1
 
-	if len(label) == 0:
-		print("Nothing to wait for. Run gmx_run or orca_run with parallel flag first", file=sys.stderr)
-	else:
-		print(run_wait(f"-l {label}"))
+	# reset pickle
+	with open(f"{PICKLE_PATH}/lock.pkl","wb") as fp:
+		values = {"Parallel_label": "", "Count": 0}
+		pickle.dump(values, fp)
 
-		label = {"Parallel_label": ""}
-		with open(f'{PICKLE_PATH}/lock.pkl', 'wb') as fp:
-			pickle.dump(label, fp)
+	print(run_wait(f"-l {label} -c {count}"))
 
 
 def write_template(method, image, command, workdir, parallel, **kwargs):
@@ -130,7 +131,7 @@ def write_template(method, image, command, workdir, parallel, **kwargs):
 			default_image = ORCA_IMAGE
 			default_name = "orca"
 
-		# Always replace "_" with "-" because "_" is not kubernetes accepted char in the name
+		# Always replace "" with "-" because "" is not kubernetes accepted char in the name
 		method = method.replace("_", "-")
 
 		# Set names
@@ -139,17 +140,6 @@ def write_template(method, image, command, workdir, parallel, **kwargs):
 		doc['metadata']['name'] = identificator
 		doc['spec']['template']['spec']['containers'][0]['name'] = "{}-{}-deployment-{}".format(default_name, method, timestamp)
 		doc['spec']['template']['metadata']['labels']['app'] = identificator
-
-		# Set parallel label lock
-		if parallel:
-			with open(f"{PICKLE_PATH}/lock.pkl","rb") as fp:
-				lock_object = pickle.load(fp)
-			if len(lock_object['Parallel_label']) == 0:
-				label = {"Parallel_label": identificator}
-				with open(f"{PICKLE_PATH}/lock.pkl","wb") as fp:
-					pickle.dump(label, fp)
-			else:
-				doc['spec']['template']['metadata']['labels']['app'] = lock_object['Parallel_label']
 
 		# Set gromacs args
 		doc['spec']['template']['spec']['containers'][0]['args'] = ["/bin/bash", "-c", DoubleQuotedScalarString(command)]
@@ -160,6 +150,18 @@ def write_template(method, image, command, workdir, parallel, **kwargs):
 			rdtscp_env = {'name': "GMX_RDTSCP", 'value': DoubleQuotedScalarString("ON" if rdtscp else "OFF")}
 			arch_env = {'name': "GMX_ARCH", 'value': DoubleQuotedScalarString(arch)}
 			doc['spec']['template']['spec']['containers'][0]['env'] = [double_env, rdtscp_env, arch_env]
+
+		# If parallel is enabled set label so kubectl logs can print logs according to label
+		if parallel:
+			with open(f"{PICKLE_PATH}/lock.pkl","rb") as fp:
+				lock_object = pickle.load(fp)
+			if len(lock_object['Parallel_label']) == 0:
+				label = {"Parallel_label": identificator, "Count": 0}
+				with open(f"{PICKLE_PATH}/lock.pkl","wb") as fp:
+					pickle.dump(label, fp)
+			else:
+				doc['spec']['template']['metadata']['labels']['app'] = lock_object['Parallel_label']
+
 
 		# Set image
 		doc['spec']['template']['spec']['containers'][0]['image'] = default_image if not image else image
@@ -193,8 +195,14 @@ def run_job(kubernetes_config, label, parallel):
 	os.system(f"kubectl apply -f {kubernetes_config}")
 
 	if not parallel:
-		return run_wait(f"-l {label}")
-	return ""
+		return run_wait(f"-l {label} -c 1")
+	
+	# increment pickle count
+	with open(f"{PICKLE_PATH}/lock.pkl","rb") as fp:
+		lock_object = pickle.load(fp)
+	with open(f"{PICKLE_PATH}/lock.pkl","wb") as fp:
+		lock_object['Count'] += 1 
+		pickle.dump(lock_object, fp)
 
 
 def get_no_of_procs(orca_method_file):
@@ -206,9 +214,8 @@ def get_no_of_procs(orca_method_file):
 
 
 def run_wait(command):
-	# Run the shell script to wait until kubernetes pod - container finishes
 	cmd = f"{KUBERNETES_WAIT_PATH}/kubernetes-wait.sh {command}"
 	process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-
-	# Wait until k8s (kubernetes-wait.sh) finishes and return the output
+	
 	return process.communicate()[0].decode('utf-8', 'ignore')
+	

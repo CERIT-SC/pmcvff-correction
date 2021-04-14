@@ -32,3 +32,4 @@ spec:
             claimName: SUBSTITUTE
   backoffLimit: 0
   ttlSecondsAfterFinished: 600
+  automountServiceAccountToken: false
