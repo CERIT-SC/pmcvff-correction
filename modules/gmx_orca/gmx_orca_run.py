@@ -214,10 +214,8 @@ def get_no_of_procs(orca_method_file):
 
 
 def run_wait(command):
-	# Run the shell script to wait until kubernetes pod - container finishes
 	cmd = f"{KUBERNETES_WAIT_PATH}/kubernetes-wait.sh {command}"
 	process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 	
-	# Wait until k8s (kubernetes-wait.sh) finishes and return the output
-	return None if "-p" in command else process.communicate()[0].decode('utf-8', 'ignore')
+	return process.communicate()[0].decode('utf-8', 'ignore')
 	

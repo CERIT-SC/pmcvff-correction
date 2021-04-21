@@ -22,7 +22,7 @@ spec:
               name: shared-volume
           resources:
             limits:
-              cpu: 20
+              cpu: 12
             requests:
               cpu: 4
       restartPolicy: Never
@@ -31,4 +31,4 @@ spec:
           persistentVolumeClaim:
             claimName: SUBSTITUTE
   backoffLimit: 0
-  ttlSecondsAfterFinished: 600
+  ttlSecondsAfterFinished: 604800

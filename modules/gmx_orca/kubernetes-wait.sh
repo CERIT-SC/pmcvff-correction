@@ -1,5 +1,6 @@
 #!/bin/bash
 
+unset count
 unset label
 while getopts ":l:c:" opt; do
   case $opt in
