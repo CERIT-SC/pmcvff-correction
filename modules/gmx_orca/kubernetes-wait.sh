@@ -39,3 +39,4 @@ while true; do
 done
 
 kubectl logs -l app=$label --tail=-1
+

@@ -1,19 +1,35 @@
 #!/bin/bash
+unset id
+application="docker"
 
-source config.sh
-INTELPYTHON=l_pythoni3_p_2019.5.098.tar.gz
+while getopts ":pi:" opt; do
+  case $opt in
+    p)
+      application="podman"
+      echo "building with podman.." >&2
+      ;;
+    i)
+      id="-${OPTARG}"
+      echo "building with id $id"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
 
-if [ ! -f "$INTELPYTHON" ]; then
-	echo "You don't possess IntelPython package... Download at https://software.intel.com/content/www/us/en/develop/tools/distribution-for-python/choose-download.html"
-	echo "If the version is different than \"$INTELPYTHON\", change variable name in build script"
-	exit 1
+intelpython="l_pythoni3_p_2019.5.098.tar.gz"
+name="spectraes/pipeline:$(date +%F)${id}"
+build="${application} build --build-arg INTELPYTHON=${intelpython} -t ${name} ."
+push="${application} push ${name}"
+
+eval "${build} && ${push}"
+
+if [[ $? == 0 ]]; then
+	echo "successfully built and pushed image ${name}"
 fi
-
-build_setup=" -t ${IMAGE_NAME}"
-
-if [ "$1" == "-p" ]; then
-	podman build $build_setup .
-else
-	docker build $build_setup .
-fi
-
