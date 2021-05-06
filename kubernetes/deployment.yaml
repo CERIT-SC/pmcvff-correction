@@ -1,0 +1,52 @@
+
+---
+apiVersion: apps/v1                                                             
+kind: Deployment                                                                
+metadata:                                                                       
+  name: magic-pipeline-web                         
+spec:                                                                           
+  replicas: 1                                                                   
+  selector:                                                                     
+    matchLabels:                                                                
+      app: magic-pipeline-web                                                      
+  template:                                                                     
+    metadata:                                                                   
+      labels:                                                                   
+        app: magic-pipeline-web                                                   
+    spec:                                                                       
+      containers:                                                               
+        - name: flask-web                                                     
+          image: spectraes/magic-pipeline-web:2021-05-05 
+          env:                                                                  
+          - name: CLIENT_ID                                                 
+            valueFrom:                                                          
+              secretKeyRef:                                                     
+                name: client-id                                            
+                key: id                                          
+          - name: CLIENT_SECRET 
+            valueFrom:                                                          
+              secretKeyRef:                                                     
+                name: client-secret                                          
+                key: secret                           
+          ports:                                                                
+            - containerPort: 8888      
+          resources:                                                            
+            requests:                                                           
+              cpu: "200m"                                                       
+            limits:                                                             
+              cpu: 1                                                            
+          securityContext:                                                      
+            runAsNonRoot: false                                               
+            allowPrivilegeEscalation: false                                     
+          volumeMounts:
+            - mountPath: /root/.kube
+              name: kube-config-volume
+            - mountPath: /work
+              name: shared-volume
+      volumes:
+      - name: kube-config-volume
+        secret:
+          secretName: kube-config-secret
+      - name: shared-volume
+        persistentVolumeClaim:
+          claimName: web-claim
