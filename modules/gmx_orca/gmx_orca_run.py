@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-import ruamel_yaml
-from ruamel_yaml.scalarstring import DoubleQuotedScalarString
+import ruamel.yaml
+from ruamel.yaml.scalarstring import DoubleQuotedScalarString
 import subprocess
 import time
 import os
@@ -121,7 +121,7 @@ def parallel_wait():
 
 def write_template(method, command, params, **kwargs):
         with open(f"{os.path.dirname(os.path.realpath(__file__))}/kubernetes-template.yaml") as ifile:
-                doc = ruamel_yaml.round_trip_load(ifile, preserve_quotes=True)
+                doc = ruamel.yaml.round_trip_load(ifile, preserve_quotes=True)
 
                 orca_method_file = kwargs.get('orca_method_file', '')
                 timestamp = str(time.time()).replace(".", "")
@@ -181,7 +181,7 @@ def write_template(method, command, params, **kwargs):
                 # Write to file
                 ofile_name = "{}-{}-rdtscp.yaml".format(default_name, method)
                 with open(ofile_name, "w") as ofile:
-                        ruamel_yaml.round_trip_dump(doc, ofile, explicit_start=True)
+                        ruamel.yaml.round_trip_dump(doc, ofile, explicit_start=True)
 
                 return ofile_name, identificator
 

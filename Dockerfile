@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 USER root
 
@@ -45,6 +45,7 @@ RUN bash -c 'echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring
 RUN apt update
 RUN apt install -y kubectl
 
+RUN apt-get install -y python3-rdkit librdkit1 rdkit-data
 
 
 #copy all necessary files to run PMCV force field correction pipeline
@@ -53,10 +54,15 @@ COPY tleapin.txt /work/
 COPY init.sh /opt/
 RUN chown -R 1001:1001 /work
 
+RUN pip3 install Pillow tqdm molvs matplotlib mdtraj
+RUN pip3 install py3Dmol plotly ruamel_yaml 
+RUN pip3 install pandas
+
+ENV PYTHONPATH=/home/base
+ENV HOME=/work
+
 WORKDIR /work
 EXPOSE 8888
-
-ENV HOME=/work
 
 
 # CMD bash -c "/opt/init.sh && \
