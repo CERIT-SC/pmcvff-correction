@@ -3,7 +3,8 @@
 # add production user and permissions
 useradd --uid 1001 --create-home --shell /bin/bash magic_user
 chmod a+rwx /home/base/modules/gmx_orca/lock.pkl
-chmod -R a+rX /opt /home
+# chmod -R a+rX /opt /home
+chmod -R a+rX /home
 
 # create all directories used in computations
 cd /work
